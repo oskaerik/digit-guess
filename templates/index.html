@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Digit Guess</title>
+        <style>
+            #canvas {
+                border: 1px solid #000000;
+                display: block;
+                margin: auto;
+            }
+
+            #resultHolder {
+                text-align: center;
+                font-family: sans-serif;
+                font-weight: bold;
+                font-size: 2em;
+            }
+        </style>
+        <script type="text/javascript">
+            var canvas, ctx, drawing = false, last_click = null;
+
+            function init() {
+                canvas = document.getElementById("canvas");
+                ctx = canvas.getContext("2d");
+
+                // Set up drawing
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = "black";
+                ctx.lineJoin = "round";
+                ctx.lineWidth = 8;
+
+                // Add event listeners
+                canvas.addEventListener("mousemove", function(e) {
+                    if (drawing) draw(e.pageX, e.pageY, true);
+                });
+                canvas.addEventListener("mousedown", function(e) {
+                    drawing = true;
+                    draw(e.pageX, e.pageY, false);
+                });
+                canvas.addEventListener("mouseup", function(e) {
+                    drawing = false;
+                    sendDrawing();
+                });
+                canvas.addEventListener("mouseleave", function(e) {
+                    drawing = false;
+                    sendDrawing();
+                });
+            }
+
+            function draw(pageX, pageY, dragging) {
+                // Calculate x and y position
+                const x = pageX - canvas.offsetLeft;
+                const y = pageY - canvas.offsetTop;
+
+                // Draw line or dot
+                ctx.beginPath();
+                if (dragging && last_click !== null) ctx.moveTo(last_click.x, last_click.y);
+                else ctx.moveTo(x, y);
+                ctx.lineTo(x, y);
+                ctx.closePath();
+                ctx.stroke();
+                last_click = { x: x, y: y };
+            }
+
+            function sendDrawing() {
+                const xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 200)
+                        document.getElementById("result").innerHTML = this.responseText;
+                };
+                xhttp.open("POST", "{{route}}");
+                xhttp.send(canvas.toDataURL().substr(22));
+            }
+        </script>
+    </head>
+    <body onload="init()">
+        <canvas id="canvas" width="{{width}}" height="{{height}}"></canvas>
+        <p id="resultHolder">I see: <span id="result"></span></p>
+    </body>
+</html>
