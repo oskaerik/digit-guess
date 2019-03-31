@@ -37,7 +37,7 @@ def process():
     kernel = np.ones((kernel, kernel), dtype='uint8')
     image = cv2.dilate(image, kernel=kernel)
 
-    # Crop image, only keep non-zero pixels
+    # Crop image, keep non-zero pixels
     x, y, w, h = cv2.boundingRect(cv2.findNonZero(image))
     image = image[y:y+h, x:x+w]
 
