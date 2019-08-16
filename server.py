@@ -31,6 +31,39 @@ def process():
     # If the image if empty, do nothing
     if np.count_nonzero(image) == 0: return ''
 
+    characters = find_characters(image)
+    for i, character in enumerate(characters):
+        character = mnistify(character)
+        # Save image for debugging
+        cv2.imwrite(f'characters_{i}.png', character)
+
+        # Reshape and predict
+        # image = image.reshape((1, OUT, OUT, 1))
+        # prediction = model.predict_classes(character)[0]
+
+
+
+    # # Send response
+    # return str(prediction)
+    return ''
+
+def find_characters(image):
+    """Finds the characters in an image."""
+    characters = []
+    contours, _ = cv2.findContours(image, mode=cv2.RETR_EXTERNAL,
+                                   method=cv2.CHAIN_APPROX_SIMPLE)
+    for i, contour in enumerate(contours):
+        x, y, _, _ = cv2.boundingRect(contour)
+        character = np.zeros_like(image)
+        character = cv2.drawContours(character, contours, i,
+                                color=255, thickness=-1)
+        character = cv2.GaussianBlur(character, (3, 3), 0)
+        characters.append((y, x, character))
+    characters.sort()
+    return characters
+
+def mnistify(image):
+    """Transforms the image to MNIST style."""
     # Dilate image
     _, _, w, h = cv2.boundingRect(cv2.findNonZero(image))
     kernel = int(math.exp(max(w, h)/100))*2 + 1
@@ -56,16 +89,7 @@ def process():
                            (math.ceil((OUT-image.shape[1])/2),)),
                    'constant', constant_values=0)
     image = image[:OUT, :OUT]
-
-    # Save image for debugging
-    cv2.imwrite('processed.png', image)
-
-    # Reshape and predict
-    image = image.reshape((1, OUT, OUT, 1))
-    prediction = model.predict_classes(image)[0]
-
-    # Send response
-    return str(prediction)
+    return image
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
